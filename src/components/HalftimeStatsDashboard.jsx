@@ -114,6 +114,7 @@ function processEvents(events) {
 
   const knockOnCount = events.filter((e) => e.action_name === 'Knock-on Intencional').length;
   const paseForwardCount = events.filter((e) => e.action_name === 'Pase Forward').length;
+  const turnoversCount = events.filter((e) => e.action_name === 'Turnover / Pesca').length;
 
   const totalEvents = events.length;
   const zoneCounts = {};
@@ -126,8 +127,8 @@ function processEvents(events) {
   const territorioZones = TERRITORIO_ORDER.map((label) => {
     const count = zoneCounts[label] || 0;
     const pct = totalEvents > 0 ? Math.round((count / totalEvents) * 100) : 0;
-    const opacity = totalEvents > 0 ? 0.3 + (count / totalEvents) * 0.65 : 0.3;
-    return { label, pct, opacity };
+    const alpha = totalEvents > 0 ? count / totalEvents : 0;
+    return { label, pct, alpha };
   });
 
   return {
@@ -136,6 +137,7 @@ function processEvents(events) {
     infractionsData,
     knockOnCount,
     paseForwardCount,
+    turnoversCount,
     territorioZones,
   };
 }
@@ -203,6 +205,7 @@ export default function HalftimeStatsDashboard({ currentMatchId, onBackToMatch }
     infractionsData,
     knockOnCount,
     paseForwardCount,
+    turnoversCount,
     territorioZones,
   } = useMemo(() => processEvents(eventsToAggregate), [eventsToAggregate]);
 
@@ -377,7 +380,9 @@ export default function HalftimeStatsDashboard({ currentMatchId, onBackToMatch }
               <span className="text-xl text-slate-300 text-center mt-2">Pases Forward</span>
             </div>
             <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 py-4 px-2 h-full min-h-0">
-              <span className="text-7xl font-bold text-slate-400 tabular-nums leading-none">—</span>
+              <span className="text-7xl font-bold text-emerald-500 tabular-nums leading-none">
+                {turnoversCount}
+              </span>
               <span className="text-xl text-slate-300 text-center mt-2">Turnovers Ganados</span>
             </div>
           </div>
@@ -388,13 +393,13 @@ export default function HalftimeStatsDashboard({ currentMatchId, onBackToMatch }
           <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Mapa de Territorio
           </h2>
-          <div className="flex-1 min-h-0 flex flex-col rounded-lg overflow-hidden border border-slate-700">
+          <div className="flex-1 min-h-0 flex flex-col rounded-lg overflow-hidden border border-slate-700 bg-slate-800">
             {territorioZones.map((zone) => (
               <div
                 key={zone.label}
                 className="flex-1 min-h-[22%] flex items-center justify-center relative"
                 style={{
-                  backgroundColor: `rgba(239, 68, 68, ${zone.opacity})`,
+                  backgroundColor: `rgba(239, 68, 68, ${zone.alpha})`,
                 }}
               >
                 <span className="font-bold text-white text-sm drop-shadow-md z-10">

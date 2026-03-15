@@ -36,6 +36,12 @@ export const ACTION_BUTTONS = [
       { id: 'forward-pass', label: 'Pase Forward', variant: 'penalty' },
     ],
   },
+  {
+    category: 'DEFENSA',
+    actions: [
+      { id: 'turnover-pesca', label: 'Turnover / Pesca', variant: 'positive' },
+    ],
+  },
 ];
 
 export function getActionLabel(actionId) {
