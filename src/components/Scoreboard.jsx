@@ -13,7 +13,7 @@ export default function Scoreboard({
         onClick={onBack}
         className="flex-shrink-0 h-8 px-2 rounded text-slate-300 hover:text-slate-100 hover:bg-slate-700 text-xs font-medium touch-manipulation flex items-center gap-1"
       >
-        ⬅️ Menú Principal
+        Menú
       </button>
 
       <div className="flex-1 min-w-0 flex items-center justify-center gap-2 flex-wrap">

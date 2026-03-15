@@ -6,7 +6,7 @@ import Scoreboard from './Scoreboard';
 import HalftimeStatsDashboard from './HalftimeStatsDashboard';
 import { supabase } from '../supabase';
 
-export default function DashboardLayout({ currentMatchId }) {
+export default function DashboardLayout({ currentMatchId, onGoToMenu }) {
   const [view, setView] = useState('live');
   const [activeAction, setActiveAction] = useState(null);
   const [ourScore, setOurScore] = useState(0);
@@ -83,8 +83,8 @@ export default function DashboardLayout({ currentMatchId }) {
   );
 
   const handleBack = useCallback(() => {
-    console.log('Menú Principal (navegación simulada)');
-  }, []);
+    onGoToMenu?.();
+  }, [onGoToMenu]);
 
   const handleViewStats = useCallback(() => setView('stats'), []);
   const handleBackToMatch = useCallback(() => setView('live'), []);

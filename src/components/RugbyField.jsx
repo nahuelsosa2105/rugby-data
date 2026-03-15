@@ -90,15 +90,6 @@ export default function RugbyField({ onFieldClick, disabled }) {
           INGOAL RIVAL
         </span>
       </div>
-      <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        aria-hidden
-      >
-        <span className="text-slate-500 text-xs font-medium tracking-wide flex flex-row items-center gap-1">
-          <span className="text-white/30">ATAQUE</span>
-          <span className="opacity-30">➡️</span>
-        </span>
-      </div>
     </div>
   );
 }
