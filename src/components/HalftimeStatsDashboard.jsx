@@ -144,30 +144,58 @@ export default function HalftimeStatsDashboard({ currentMatchId, onBackToMatch }
   const [period, setPeriod] = useState('1er Tiempo');
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
+  const [isMatchFinished, setIsMatchFinished] = useState(false);
+  const [ourScore, setOurScore] = useState(0);
+  const [rivalScore, setRivalScore] = useState(0);
+  const [opponentName, setOpponentName] = useState('');
 
   useEffect(() => {
     if (!currentMatchId) {
       setLoading(false);
       setEvents([]);
+      setIsMatchFinished(false);
+      setOurScore(0);
+      setRivalScore(0);
+      setOpponentName('');
       return;
     }
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('match_events')
-        .select('match_id, category, action_name, field_zone')
-        .eq('match_id', currentMatchId);
+      const [matchRes, eventsRes] = await Promise.all([
+        supabase
+          .from('matches')
+          .select('is_finished, our_score, rival_score, opponent')
+          .eq('id', currentMatchId)
+          .single(),
+        supabase
+          .from('match_events')
+          .select('match_id, match_half, category, action_name, field_zone')
+          .eq('match_id', currentMatchId),
+      ]);
       if (cancelled) return;
-      if (error) {
+      if (matchRes.data) {
+        setIsMatchFinished(!!matchRes.data.is_finished);
+        setOurScore(matchRes.data.our_score ?? 0);
+        setRivalScore(matchRes.data.rival_score ?? 0);
+        setOpponentName(matchRes.data.opponent ?? '');
+        if (matchRes.data.is_finished) setPeriod('Total');
+      }
+      if (eventsRes.error) {
         setEvents([]);
       } else {
-        setEvents(data ?? []);
+        setEvents(eventsRes.data ?? []);
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [currentMatchId]);
+
+  const eventsToAggregate = useMemo(() => {
+    if (period === 'Total' || isMatchFinished) return events;
+    const half = period === '1er Tiempo' ? 1 : 2;
+    return events.filter((e) => e.match_half === half);
+  }, [events, period, isMatchFinished]);
 
   const {
     scrumData,
@@ -176,7 +204,7 @@ export default function HalftimeStatsDashboard({ currentMatchId, onBackToMatch }
     knockOnCount,
     paseForwardCount,
     territorioZones,
-  } = useMemo(() => processEvents(events), [events]);
+  } = useMemo(() => processEvents(eventsToAggregate), [eventsToAggregate]);
 
   if (loading) {
     return (
@@ -213,23 +241,59 @@ export default function HalftimeStatsDashboard({ currentMatchId, onBackToMatch }
         <h1 className="flex-1 text-center text-lg font-semibold text-white truncate">
           Estadísticas del Partido
         </h1>
-        <div className="flex-shrink-0 flex rounded-lg overflow-hidden border border-slate-600 bg-slate-800 p-0.5">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-xs font-medium touch-manipulation transition-colors ${
-                period === p
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+        {!isMatchFinished && (
+          <div className="flex-shrink-0 flex rounded-lg overflow-hidden border border-slate-600 bg-slate-800 p-0.5">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-xs font-medium touch-manipulation transition-colors ${
+                  period === p
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
+
+      <section className="flex-shrink-0 w-full flex justify-center items-center py-4 px-2 bg-slate-800/50 border-b border-slate-700">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
+          <span className="text-slate-300 text-xl sm:text-2xl font-black uppercase tracking-wide">
+            Nosotros
+          </span>
+          <span
+            className={`tabular-nums font-black text-5xl sm:text-6xl ${
+              ourScore > rivalScore
+                ? 'text-emerald-400'
+                : ourScore < rivalScore
+                  ? 'text-red-400'
+                  : 'text-white'
+            }`}
+          >
+            [ {ourScore} ]
+          </span>
+          <span className="text-slate-400 font-black text-3xl sm:text-4xl">—</span>
+          <span
+            className={`tabular-nums font-black text-5xl sm:text-6xl ${
+              rivalScore > ourScore
+                ? 'text-emerald-400'
+                : rivalScore < ourScore
+                  ? 'text-red-400'
+                  : 'text-white'
+            }`}
+          >
+            [ {rivalScore} ]
+          </span>
+          <span className="text-slate-300 text-xl sm:text-2xl font-black uppercase tracking-wide truncate max-w-[12rem]">
+            {(opponentName || 'RIVAL').toUpperCase()}
+          </span>
+        </div>
+      </section>
 
       <main className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-4 p-4 overflow-hidden">
         {/* Top-Left: Obtención (Set Pieces) */}

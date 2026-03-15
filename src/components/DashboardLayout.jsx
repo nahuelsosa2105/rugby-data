@@ -14,6 +14,12 @@ export default function DashboardLayout({ currentMatchId }) {
   const [currentHalf, setCurrentHalf] = useState(1);
   const [lastEventId, setLastEventId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [opponentName, setOpponentName] = useState('');
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    actionType: null,
+    message: '',
+  });
 
   useEffect(() => {
     if (!currentMatchId) return;
@@ -21,7 +27,7 @@ export default function DashboardLayout({ currentMatchId }) {
     (async () => {
       const { data, error } = await supabase
         .from('matches')
-        .select('our_score, rival_score, half_active')
+        .select('our_score, rival_score, half_active, opponent')
         .eq('id', currentMatchId)
         .single();
       if (cancelled) return;
@@ -30,6 +36,7 @@ export default function DashboardLayout({ currentMatchId }) {
         setOurScore(data.our_score ?? 0);
         setRivalScore(data.rival_score ?? 0);
         setCurrentHalf(data.half_active ?? 1);
+        setOpponentName(data.opponent ?? '');
       }
     })();
     return () => { cancelled = true; };
@@ -114,6 +121,33 @@ export default function DashboardLayout({ currentMatchId }) {
     }
   }, [currentMatchId, showToast]);
 
+  const openConfirmEndHalf = useCallback(() => {
+    setConfirmModal({
+      isOpen: true,
+      actionType: 'endHalf',
+      message: '¿Estás seguro que querés finalizar el 1er Tiempo?',
+    });
+  }, []);
+
+  const openConfirmEndMatch = useCallback(() => {
+    setConfirmModal({
+      isOpen: true,
+      actionType: 'endMatch',
+      message: '¿Estás seguro que querés finalizar el partido?',
+    });
+  }, []);
+
+  const handleConfirmModalConfirm = useCallback(async () => {
+    const actionType = confirmModal.actionType;
+    setConfirmModal({ isOpen: false, actionType: null, message: '' });
+    if (actionType === 'endHalf') await handleEndHalf();
+    if (actionType === 'endMatch') await handleEndMatch();
+  }, [confirmModal, handleEndHalf, handleEndMatch]);
+
+  const handleConfirmModalCancel = useCallback(() => {
+    setConfirmModal({ isOpen: false, actionType: null, message: '' });
+  }, []);
+
   const handleUndo = useCallback(async () => {
     if (!lastEventId) return;
     try {
@@ -175,6 +209,36 @@ export default function DashboardLayout({ currentMatchId }) {
 
   return (
     <div className="h-full w-full flex flex-col bg-slate-900 text-slate-100 relative overflow-hidden">
+      {confirmModal.isOpen && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-modal-title"
+        >
+          <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl max-w-sm w-full">
+            <p id="confirm-modal-title" className="text-slate-200 text-center text-lg font-medium mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={handleConfirmModalCancel}
+                className="flex-1 h-14 rounded-xl bg-slate-600 hover:bg-slate-500 active:bg-slate-700 text-white font-semibold text-base touch-manipulation"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmModalConfirm}
+                className="flex-1 h-14 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white font-semibold text-base touch-manipulation"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {toastMessage && (
         <div
           className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium shadow-lg"
@@ -186,6 +250,7 @@ export default function DashboardLayout({ currentMatchId }) {
       <Scoreboard
         ourScore={ourScore}
         rivalScore={rivalScore}
+        opponentName={opponentName || 'RIVAL'}
         onOurScoreAdd={(points) => handleScoreUpdate('us', points)}
         onRivalScoreAdd={(points) => handleScoreUpdate('rival', points)}
         onBack={handleBack}
@@ -204,8 +269,8 @@ export default function DashboardLayout({ currentMatchId }) {
             onViewStats={handleViewStats}
             currentHalf={currentHalf}
             lastEventId={lastEventId}
-            onEndHalf={handleEndHalf}
-            onEndMatch={handleEndMatch}
+            onEndHalf={openConfirmEndHalf}
+            onEndMatch={openConfirmEndMatch}
             onUndo={handleUndo}
           />
         </div>

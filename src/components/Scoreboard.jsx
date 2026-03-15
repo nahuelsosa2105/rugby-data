@@ -4,6 +4,7 @@ export default function Scoreboard({
   onOurScoreAdd,
   onRivalScoreAdd,
   onBack,
+  opponentName = 'RIVAL',
 }) {
   return (
     <header className="flex-shrink-0 w-full h-12 px-2 flex items-center justify-between gap-2 bg-slate-800 border-b border-slate-700">
@@ -72,7 +73,9 @@ export default function Scoreboard({
             +5
           </button>
         </div>
-        <span className="text-slate-200 font-semibold text-xs whitespace-nowrap">RIVAL</span>
+        <span className="text-slate-200 font-semibold text-xs truncate max-w-[6rem]" title={opponentName}>
+          {opponentName}
+        </span>
       </div>
     </header>
   );

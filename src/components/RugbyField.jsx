@@ -75,24 +75,28 @@ export default function RugbyField({ onFieldClick, disabled }) {
 
       {/* Endzone labels + center indicator: purely visual, do not capture clicks */}
       <div
-        className="absolute top-2 left-0 right-0 flex justify-center pointer-events-none"
+        className="absolute left-2 top-0 bottom-0 flex items-center justify-center pointer-events-none"
         aria-hidden
       >
-        <span className="text-sm font-bold tracking-wide text-red-400/70">INGOAL RIVAL</span>
+        <span className="text-sm font-bold tracking-wide text-green-400/70 -rotate-90 whitespace-nowrap">
+          NUESTRO INGOAL
+        </span>
       </div>
       <div
-        className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none"
+        className="absolute right-2 top-0 bottom-0 flex items-center justify-center pointer-events-none"
         aria-hidden
       >
-        <span className="text-sm font-bold tracking-wide text-green-400/70">NUESTRO INGOAL</span>
+        <span className="text-sm font-bold tracking-wide text-red-400/70 rotate-90 whitespace-nowrap">
+          INGOAL RIVAL
+        </span>
       </div>
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none"
         aria-hidden
       >
-        <span className="text-slate-500 text-xs font-medium tracking-wide flex flex-col items-center gap-0.5">
-          <span className="opacity-30">⬆</span>
+        <span className="text-slate-500 text-xs font-medium tracking-wide flex flex-row items-center gap-1">
           <span className="text-white/30">ATAQUE</span>
+          <span className="opacity-30">➡️</span>
         </span>
       </div>
     </div>
