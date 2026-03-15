@@ -15,15 +15,18 @@ const activeStyles = {
   neutral: 'ring-2 ring-slate-300 ring-offset-1 ring-offset-slate-800',
 };
 
-function handleEndFirstHalf() {
-  console.log('Fin 1er Tiempo');
-}
+export default function ActionPanel({
+  activeAction,
+  onSelectAction,
+  onViewStats,
+  currentHalf,
+  lastEventId,
+  onEndHalf,
+  onEndMatch,
+  onUndo,
+}) {
+  const isSecondHalf = currentHalf === 2;
 
-function handleEndMatch() {
-  console.log('Fin Partido');
-}
-
-export default function ActionPanel({ activeAction, onSelectAction, onViewStats }) {
   return (
     <div className="h-full min-h-0 flex flex-col gap-1 overflow-hidden p-2">
       {ACTION_BUTTONS.map(({ category, actions }) => (
@@ -61,22 +64,39 @@ export default function ActionPanel({ activeAction, onSelectAction, onViewStats 
         <div className="grid grid-cols-2 gap-1.5">
           <button
             type="button"
-            onClick={handleEndFirstHalf}
-            className="h-10 px-2 rounded-lg border border-slate-500 bg-slate-600 hover:bg-slate-500 active:bg-slate-700 text-white text-xs font-semibold leading-tight touch-manipulation"
+            onClick={onEndHalf}
+            disabled={isSecondHalf}
+            className={`h-10 px-2 rounded-lg border text-white text-xs font-semibold leading-tight touch-manipulation ${
+              isSecondHalf
+                ? 'border-slate-600 bg-slate-700 text-slate-500 cursor-not-allowed'
+                : 'border-slate-500 bg-slate-600 hover:bg-slate-500 active:bg-slate-700'
+            }`}
           >
             Fin 1er Tiempo
           </button>
           <button
             type="button"
-            onClick={handleEndMatch}
+            onClick={onEndMatch}
             className="h-10 px-2 rounded-lg border border-slate-500 bg-slate-600 hover:bg-slate-500 active:bg-slate-700 text-white text-xs font-semibold leading-tight touch-manipulation"
           >
             Fin Partido
           </button>
           <button
             type="button"
+            onClick={onUndo}
+            disabled={!lastEventId}
+            className={`h-10 px-2 rounded-lg border text-white text-xs font-semibold leading-tight touch-manipulation ${
+              lastEventId
+                ? 'bg-red-600 hover:bg-red-500 active:bg-red-700 border-red-500'
+                : 'border-slate-600 bg-slate-700 text-slate-500 cursor-not-allowed'
+            }`}
+          >
+            Deshacer Última
+          </button>
+          <button
+            type="button"
             onClick={onViewStats}
-            className="col-span-2 h-10 px-2 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold leading-tight touch-manipulation border border-blue-500"
+            className="h-10 px-2 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold leading-tight touch-manipulation border border-blue-500"
           >
             Ver Estadísticas
           </button>
