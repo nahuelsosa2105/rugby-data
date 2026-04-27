@@ -4,6 +4,15 @@
  */
 export const ACTION_BUTTONS = [
   {
+    category: 'PUNTOS',
+    actions: [
+      { id: 'try', label: 'Try', variant: 'scoring' },
+      { id: 'conversion', label: 'Conversión', variant: 'scoring' },
+      { id: 'penal-goal', label: 'Penal a los palos', variant: 'scoring' },
+      { id: 'drop-goal', label: 'Drop', variant: 'scoring' },
+    ],
+  },
+  {
     category: 'FORMACIONES FIJAS',
     actions: [
       { id: 'scrum-won', label: 'Scrum Ganado', variant: 'positive' },
@@ -27,12 +36,20 @@ export const ACTION_BUTTONS = [
       { id: 'dangerous-tackle', label: 'Tacle Peligroso', variant: 'penalty' },
       { id: 'offside', label: 'Offside', variant: 'penalty' },
       { id: 'obstruction', label: 'Obstrucción', variant: 'penalty' },
+      { id: 'discipline-knock-on-intentional', label: 'Knock-on Intencional', variant: 'penalty' },
+    ],
+  },
+  {
+    category: 'TARJETAS',
+    actions: [
+      { id: 'yellow-card', label: 'Tarjeta Amarilla', variant: 'warning' },
+      { id: 'red-card', label: 'Tarjeta Roja', variant: 'danger' },
     ],
   },
   {
     category: 'MANEJO',
     actions: [
-      { id: 'deliberate-knock-on', label: 'Knock-on Intencional', variant: 'penalty' },
+      { id: 'knock-on', label: 'Knock-on', variant: 'penalty' },
       { id: 'forward-pass', label: 'Pase Forward', variant: 'penalty' },
     ],
   },
@@ -40,6 +57,7 @@ export const ACTION_BUTTONS = [
     category: 'DEFENSA',
     actions: [
       { id: 'turnover-pesca', label: 'Turnover / Pesca', variant: 'positive' },
+      { id: 'tackle', label: 'Tackle', variant: 'neutral' },
     ],
   },
 ];

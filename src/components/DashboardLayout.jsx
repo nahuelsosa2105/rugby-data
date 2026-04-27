@@ -13,6 +13,7 @@ export default function DashboardLayout({ currentMatchId, onGoToMenu }) {
   const [rivalScore, setRivalScore] = useState(0);
   const [currentHalf, setCurrentHalf] = useState(1);
   const [lastEventId, setLastEventId] = useState(null);
+  const [pendingEvent, setPendingEvent] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [opponentName, setOpponentName] = useState('');
   const [confirmModal, setConfirmModal] = useState({
@@ -167,36 +168,70 @@ export default function DashboardLayout({ currentMatchId, onGoToMenu }) {
   }, [lastEventId, showToast]);
 
   const handleFieldClick = useCallback(
-    async (coords) => {
+    (coords) => {
       const zoneName = coords?.zone ?? '';
       if (!activeAction) {
         showToast('Seleccioná una acción primero');
         return;
       }
+      setPendingEvent({
+        category: activeAction.category,
+        actionName: activeAction.actionName,
+        zoneName,
+      });
+    },
+    [activeAction, showToast]
+  );
+
+  const handlePlayerSelect = useCallback(
+    async (playerNumber) => {
+      if (!pendingEvent) return;
       try {
         const { data, error } = await supabase
           .from('match_events')
           .insert({
             match_id: currentMatchId,
             match_half: currentHalf,
-            category: activeAction.category,
-            action_name: activeAction.actionName,
-            field_zone: zoneName,
+            category: pendingEvent.category,
+            action_name: pendingEvent.actionName,
+            field_zone: pendingEvent.zoneName,
+            player_number: playerNumber,
           })
           .select()
           .single();
+
         if (error) {
           showToast(`Error: ${error.message}`);
-          return;
+        } else {
+          if (data?.id) setLastEventId(data.id);
+          if (pendingEvent.category === 'PUNTOS') {
+            const pointsByAction = {
+              Try: 5,
+              'Conversión': 2,
+              'Penal a los palos': 3,
+              Drop: 3,
+            };
+            const points = pointsByAction[pendingEvent.actionName] ?? 0;
+            if (points > 0) {
+              handleScoreUpdate('us', points);
+            }
+          }
+          showToast('Evento registrado');
         }
-        if (data?.id) setLastEventId(data.id);
-        setActiveAction(null);
       } catch (err) {
         showToast(`Error: ${err.message}`);
+      } finally {
+        setPendingEvent(null);
+        setActiveAction(null);
       }
     },
-    [activeAction, currentMatchId, currentHalf, showToast]
+    [pendingEvent, currentMatchId, currentHalf, showToast, handleScoreUpdate]
   );
+
+  const handlePlayerModalCancel = useCallback(() => {
+    setPendingEvent(null);
+    setActiveAction(null);
+  }, []);
 
   if (view === 'stats') {
     return (
@@ -239,6 +274,48 @@ export default function DashboardLayout({ currentMatchId, onGoToMenu }) {
           </div>
         </div>
       )}
+      {pendingEvent && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="player-modal-title"
+        >
+          <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl max-w-lg w-full">
+            <h3 id="player-modal-title" className="text-slate-100 text-center text-xl font-bold mb-4">
+              ¿Quién realizó la acción?
+            </h3>
+            <div className="grid grid-cols-5 gap-3 justify-items-center">
+              {Array.from({ length: 25 }, (_, i) => i + 1).map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => handlePlayerSelect(num)}
+                  className="h-16 w-16 text-2xl font-bold rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white touch-manipulation transition-colors"
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 space-y-3">
+              <button
+                type="button"
+                onClick={() => handlePlayerSelect(null)}
+                className="w-full h-12 rounded-xl bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-semibold touch-manipulation transition-colors"
+              >
+                Equipo / No identificado
+              </button>
+              <button
+                type="button"
+                onClick={handlePlayerModalCancel}
+                className="w-full h-12 rounded-xl bg-slate-600 hover:bg-slate-500 active:bg-slate-700 text-white font-semibold touch-manipulation transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {toastMessage && (
         <div
           className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium shadow-lg"
@@ -259,7 +336,7 @@ export default function DashboardLayout({ currentMatchId, onGoToMenu }) {
         <div className="w-[60%] min-w-0 flex flex-col">
           <RugbyField
             onFieldClick={handleFieldClick}
-            disabled={!activeAction}
+            disabled={!activeAction || !!pendingEvent}
           />
         </div>
         <div className="w-[40%] min-w-0 flex flex-col bg-slate-800/80 rounded-xl border border-slate-700 overflow-hidden">
